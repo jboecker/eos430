@@ -12,4 +12,6 @@ void i2c_transmit(unsigned char slave_address, unsigned char* buffer, unsigned i
 void i2c_receive(unsigned char slave_address, unsigned char* buffer, unsigned int num_bytes);
 unsigned char i2c_get_nackflag();
 
+void uart_tx(unsigned char byte);
+
 #endif /* I2C_MASTER_H_ */

@@ -32,28 +32,39 @@
 
 #include <msp430g2332.h>
 
-#define I2C_OWNADDR 0x48
+#include "eos_local.h"
+#include "eos_dispatcher.h"
 
 int I2C_State = 0;                     // State variable
 int I2C_Transmit = 0;
 int I2C_TransmitBytesLeft = 0;
 
+
+#define I2C_MSG_BUFFERSIZE 50
+static volatile unsigned char i2c_msg[I2C_MSG_BUFFERSIZE];
+static volatile unsigned char i2c_msg_pos = 0;
+
 void main(void)
 {
+
+	//CSL_init();
+
   WDTCTL = WDTPW + WDTHOLD;            // Stop watchdog
-  if (CALBC1_1MHZ ==0xFF || CALDCO_1MHZ == 0xFF)
-  {
-    while(1);                          // If calibration constants erased
-                                       // do not load, trap CPU!!
-  }
-  BCSCTL1 = CALBC1_1MHZ;               // Set DCO
-  DCOCTL = CALDCO_1MHZ;
+
+    BCSCTL1 = CALBC1_16MHZ;               // Set DCO
+    DCOCTL = CALDCO_16MHZ;
+
 
   P1OUT = 0xC0;                        // P1.6 & P1.7 Pullups
   P1REN |= 0xC0;                       // P1.6 & P1.7 Pullups
   P1DIR = 0xFF;                        // Unused pins as outputs
   P2OUT = 0;
   P2DIR = 0xFF;
+
+
+  P1REN |= BIT3; // enable pullup for launchpad switch
+  P1OUT |= BIT3;
+  P1DIR &= ~BIT3;
 
   USICTL0 = USIPE6+USIPE7+USISWRST;    // Port & USI mode setup
   USICTL1 = USII2C+USIIE+USISTTIE;     // Enable I2C mode & USI interrupts
@@ -63,27 +74,41 @@ void main(void)
   USICTL1 &= ~USIIFG;                  // Clear pending flag
   _EINT();
 
+  i2c_msg[0] = 0;
+
   while(1)
   {
-    LPM0;                              // CPU off, await USI interrupt
-    _NOP();                            // Used for IAR
+	  eosprotocol_process_message();
   }
 }
 
-void i2c_got_byte(unsigned char data) {
-	__no_operation();
 
-	P1DIR |= BIT0;
-	if (data == 0x01) {
-		P1OUT |= BIT0;
-	}
-	if (data == 128) {
-		P1OUT &= ~BIT0;
-	}
+void i2c_got_byte(unsigned char data) {
+	eos_byte_received(data);
 }
 unsigned char i2c_wants_byte() {
-	static unsigned char txd = 0;
-	return txd++;
+	if (i2c_msg_pos >= I2C_MSG_BUFFERSIZE) {
+		return 0x00; // failsafe
+	}
+	if (i2c_msg[0] == 0x01) {
+		return 0x01; // without advancing i2c_msg_pos (0x01 = "busy")
+	}
+	return i2c_msg[i2c_msg_pos++];
+}
+
+void eos_message_complete_callback() {
+	i2c_msg[0] = 0x01; // "I am busy."
+}
+
+void eosprotocol_send_message( unsigned char* message, unsigned char totallength) {
+	unsigned char i;
+	if (totallength < 50) {
+		for (i=0; i<totallength; i++) {
+			i2c_msg[i+1] = message[i];
+		}
+		i2c_msg[0] = totallength;
+		i2c_msg_pos = 0;
+	}
 }
 
 //******************************************************************************
@@ -111,10 +136,10 @@ __interrupt void USI_TXRX (void)
 
       case 4: // Process Address and send (N)Ack
               if (USISRL & 0x01) {       // master reads from us
-                slave_address = (I2C_OWNADDR << 1) | 0x01;            // Save R/W bit
+                slave_address = (EOS_OWNADDR << 1) | 0x01;            // Save R/W bit
                 I2C_Transmit = 1;
               } else { // master writes to us
-            	  slave_address = I2C_OWNADDR << 1;
+            	  slave_address = EOS_OWNADDR << 1;
             	  I2C_Transmit = 0;
               }
 
@@ -141,7 +166,7 @@ __interrupt void USI_TXRX (void)
 
       case 6: // Prep for Start condition
               USICTL0 &= ~USIOE;       // SDA = input
-              slave_address = I2C_OWNADDR << 1;         // Reset slave address
+              slave_address = EOS_OWNADDR << 1;         // Reset slave address
               I2C_State = 0;           // Reset state machine
               break;
 

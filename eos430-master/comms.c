@@ -90,6 +90,18 @@ void i2c_receive(unsigned char slave_address, unsigned char* buffer, unsigned in
 }
 
 
+void uart_tx(unsigned char byte) {
+	while(!(IFG2 & UCA0TXIFG));
+	UCA0TXBUF = byte;
+}
+
+void eosprotocol_send_message( unsigned char* message, unsigned char totallength) {
+	unsigned char i;
+	for (i=0; i<totallength; i++) {
+		while(!(IFG2 & UCA0TXIFG));
+		UCA0TXBUF = message[i];
+	}
+}
 
 #pragma vector = USCIAB0RX_VECTOR
 __interrupt void USCIAB0RX_ISR(void)
@@ -104,7 +116,8 @@ __interrupt void USCIAB0RX_ISR(void)
 
 	// check for UART RX
 	if (IFG2 & UCA0RXIFG) {
-		// TODO: read UCA0RXBUF and dispatch received byte
+		unsigned char byte = UCA0RXBUF;
+		eos_byte_received(byte);
 	}
 }
 
