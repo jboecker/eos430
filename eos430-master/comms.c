@@ -102,6 +102,9 @@ void eosprotocol_send_message( unsigned char* message, unsigned char totallength
 		UCA0TXBUF = message[i];
 	}
 }
+void eos_message_complete_callback() {
+}
+
 
 #pragma vector = USCIAB0RX_VECTOR
 __interrupt void USCIAB0RX_ISR(void)

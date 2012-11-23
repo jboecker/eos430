@@ -16,7 +16,7 @@
 #define EOS_BOARD_VERSION '0','0','0','1'
 
 
-void eos_local_handle_message(unsigned char* ringbuffer, unsigned char start_index, unsigned char end_index);
+void eos_local_handle_message(unsigned char* message);
 
 void eos_update_input_state(unsigned char* state);
 

@@ -1,39 +1,8 @@
-//******************************************************************************
-//  MSP430G2xx2 Demo - I2C Slave Receiver, single byte
-//
-//  Description: I2C Slave communicates with I2C Master using
-//  the USI. Master data should increment from 0x00 with each transmitted byte
-//  which is verified by the slave.
-//  LED off for address or data Ack; LED on for address or data NAck.d by the slave.
-//  ACLK = n/a, MCLK = SMCLK = Calibrated 1MHz
-//
-//  ***THIS IS THE SLAVE CODE***
-//
-//                  Slave                      Master
-//                                      (MSP430G2xx2_usi_07.c)
-//             MSP430G2xx2          MSP430G2xx2
-//             -----------------          -----------------
-//         /|\|              XIN|-    /|\|              XIN|-
-//          | |                 |      | |                 |
-//          --|RST          XOUT|-     --|RST          XOUT|-
-//            |                 |        |                 |
-//      LED <-|P1.0             |        |                 |
-//            |                 |        |             P1.0|-> LED
-//            |         SDA/P1.7|<-------|P1.7/SDA         |
-//            |         SCL/P1.6|<-------|P1.6/SCL         |
-//
-//  Note: internal pull-ups are used in this example for SDA & SCL
-//
-//  D. Dang
-//  Texas Instruments Inc.
-//  December 2010
-//  Built with CCS Version 4.2.0 and IAR Embedded Workbench Version: 5.10
-//******************************************************************************
-
 #include <msp430g2332.h>
 
 #include "eos_local.h"
 #include "eos_dispatcher.h"
+#include "eos_config.h"
 
 int I2C_State = 0;                     // State variable
 int I2C_Transmit = 0;
@@ -57,14 +26,9 @@ void main(void)
 
   P1OUT = 0xC0;                        // P1.6 & P1.7 Pullups
   P1REN |= 0xC0;                       // P1.6 & P1.7 Pullups
-  P1DIR = 0xFF;                        // Unused pins as outputs
-  P2OUT = 0;
-  P2DIR = 0xFF;
-
-
-  P1REN |= BIT3; // enable pullup for launchpad switch
-  P1OUT |= BIT3;
-  P1DIR &= ~BIT3;
+  //P1DIR = 0xFF;                        // Unused pins as outputs
+  //P2OUT = 0;
+  //P2DIR = 0xFF;
 
   USICTL0 = USIPE6+USIPE7+USISWRST;    // Port & USI mode setup
   USICTL1 = USII2C+USIIE+USISTTIE;     // Enable I2C mode & USI interrupts
@@ -93,6 +57,10 @@ unsigned char i2c_wants_byte() {
 	if (i2c_msg[0] == 0x01) {
 		return 0x01; // without advancing i2c_msg_pos (0x01 = "busy")
 	}
+	if (i2c_msg_pos == i2c_msg[0]) { // returning the last byte of the current message?
+		// we will be "busy" after that until the next valid message is written to the buffer
+		i2c_msg[0] = 1;
+	}
 	return i2c_msg[i2c_msg_pos++];
 }
 
@@ -102,12 +70,12 @@ void eos_message_complete_callback() {
 
 void eosprotocol_send_message( unsigned char* message, unsigned char totallength) {
 	unsigned char i;
-	if (totallength < 50) {
+	if (totallength < 49) {
 		for (i=0; i<totallength; i++) {
 			i2c_msg[i+1] = message[i];
 		}
-		i2c_msg[0] = totallength;
 		i2c_msg_pos = 0;
+		i2c_msg[0] = totallength;
 	}
 }
 
@@ -136,10 +104,10 @@ __interrupt void USI_TXRX (void)
 
       case 4: // Process Address and send (N)Ack
               if (USISRL & 0x01) {       // master reads from us
-                slave_address = (EOS_OWNADDR << 1) | 0x01;            // Save R/W bit
+                slave_address = (EOS_ADDRESS << 1) | 0x01;            // Save R/W bit
                 I2C_Transmit = 1;
               } else { // master writes to us
-            	  slave_address = EOS_OWNADDR << 1;
+            	  slave_address = EOS_ADDRESS << 1;
             	  I2C_Transmit = 0;
               }
 
@@ -166,7 +134,7 @@ __interrupt void USI_TXRX (void)
 
       case 6: // Prep for Start condition
               USICTL0 &= ~USIOE;       // SDA = input
-              slave_address = EOS_OWNADDR << 1;         // Reset slave address
+              slave_address = EOS_ADDRESS << 1;         // Reset slave address
               I2C_State = 0;           // Reset state machine
               break;
 

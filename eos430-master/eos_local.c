@@ -18,25 +18,22 @@ void eos_update_input_state(unsigned char* state) {
 	}
 }
 
-void eos_local_handle_message(unsigned char* ringbuffer, unsigned char start_index, unsigned char end_index) {
+void eos_local_handle_message(unsigned char* message) {
 
-	unsigned char msg_toaddr = 0;
-	unsigned char msg_fromaddr = 0;
-	unsigned char msg_cmd = 0;
-	unsigned char msg_datalen = 0;
-	unsigned char msg_data[50];
-	unsigned char msg_checksum = 0;
+	unsigned char msg_toaddr = message[0];
+	unsigned char msg_fromaddr = message[1];
+	unsigned char msg_cmd = message[2];
+	unsigned char msg_datalen = message[3];
+	unsigned char msg_checksum = message[4 + msg_datalen];
 
-	msg_toaddr = ringbuffer[start_index++ % EOS_MESSAGE_BUFFER_SIZE];
-	msg_fromaddr = ringbuffer[start_index++ % EOS_MESSAGE_BUFFER_SIZE];
-	msg_cmd = ringbuffer[start_index++ % EOS_MESSAGE_BUFFER_SIZE];
-	msg_datalen = ringbuffer[start_index++ % EOS_MESSAGE_BUFFER_SIZE];
-
+	// verify checksum
+	unsigned char check = 0;
 	unsigned char i;
-	for (i=0; i<msg_datalen; i++)
-		msg_data[i] = ringbuffer[start_index++ % EOS_MESSAGE_BUFFER_SIZE];
-	msg_checksum = ringbuffer[start_index++ % EOS_MESSAGE_BUFFER_SIZE];
-
+	for (i=0; i<4+msg_datalen; i++)
+		if (i != 3)
+			check += message[i];
+	if (check != msg_checksum)
+		return;
 
 
 	static unsigned char response_msg[50];

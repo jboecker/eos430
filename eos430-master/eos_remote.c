@@ -33,9 +33,10 @@ unsigned char TI_USCI_I2C_slave_present(unsigned char slave_address){
                                               // a NACK occured
 }
 
-void eos_remote_handle_message(unsigned char* ringbuffer, unsigned char start_index, unsigned char end_index) {
+void eos_remote_handle_message(unsigned char* message) {
 
-	unsigned char slave_address = ringbuffer[start_index];
+	unsigned char slave_address = message[0];
+	unsigned char msg_datalen = message[3];
 
 	if (slave_address > 127)
 		return;
@@ -44,15 +45,10 @@ void eos_remote_handle_message(unsigned char* ringbuffer, unsigned char start_in
 		return;
 	}
 
-	unsigned char pos = start_index;
-
 	static unsigned char leadin_bytes[] = {0xbb, 0x88};
-
 	i2c_transmit(slave_address, &leadin_bytes[0], 2);
-	while(pos != end_index) {
-		i2c_transmit(slave_address, &ringbuffer[pos], 1);
-		pos = (pos + 1) % EOS_MESSAGE_BUFFER_SIZE;
-	}
+
+	i2c_transmit(slave_address, message, 5 + msg_datalen);
 
 	unsigned char response[40];
 	unsigned char response_length[1];
@@ -71,8 +67,9 @@ void eos_remote_handle_message(unsigned char* ringbuffer, unsigned char start_in
 
 	if (response_length[0] > 0 && response_length[0] < 40) {
 		i2c_receive(slave_address, &response[0], response_length[0]);
+		eosprotocol_send_message(response, response_length[0]);
 	}
 
-	eosprotocol_send_message(response, response_length[0]);
+
 }
 

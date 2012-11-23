@@ -10,6 +10,6 @@
 
 
 
-void eos_remote_handle_message(unsigned char* ringbuffer, unsigned char start_index, unsigned char end_index) {
+void eos_remote_handle_message(unsigned char* message) {
 }
 

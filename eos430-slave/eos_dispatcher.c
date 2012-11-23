@@ -8,11 +8,12 @@
 #include "eos_dispatcher.h"
 #include "eos_local.h"
 #include "eos_remote.h"
+#include "eos_config.h"
 #include <msp430.h>
 
 // ringbuffer to hold incoming EOS messages
 static unsigned char eos_message_buffer[EOS_MESSAGE_BUFFER_SIZE];
-static volatile unsigned char eos_message_complete_pos = 0;
+static volatile unsigned char eos_message_complete = 0;
 
 // states are multiples of 2 to allow
 // the compiler to generate a jump table
@@ -34,8 +35,23 @@ void eos_byte_received(unsigned char byte) {
 	// rx_datalength stores the data length of the EOS packet
 	// that is currently being received
 	static unsigned char rx_datalength = 0;
-	static unsigned int msgbuf_writepos = 0;
-	static unsigned char recording_message;
+	static unsigned char msgbuf_writepos = 0;
+	static unsigned char recording_message = 0;
+
+	if (msgbuf_writepos >= EOS_MESSAGE_BUFFER_SIZE) {
+		// buffer is full, this should not normally happen
+		// reset state machine
+		eos_rx_state = EOS_RXSTATE_START;
+		msgbuf_writepos = 0;
+	}
+
+	if (eos_message_complete) {
+		// we still have a complete message (that is currently being processed)
+		// in the buffer. Ignore received byte and reset state machine.
+		eos_rx_state = EOS_RXSTATE_START;
+		msgbuf_writepos = 0;
+		return;
+	}
 
 	switch (eos_rx_state) {
 	case EOS_RXSTATE_START:
@@ -78,9 +94,10 @@ void eos_byte_received(unsigned char byte) {
 		}
 		break;
 	case EOS_RXSTATE_CHECKSUM:
-		eos_message_buffer[msgbuf_writepos++ % EOS_MESSAGE_BUFFER_SIZE] = byte;
+		eos_message_buffer[msgbuf_writepos++] = byte;
 		recording_message = 0;
-		eos_message_complete_pos = (msgbuf_writepos % EOS_MESSAGE_BUFFER_SIZE);
+		eos_message_complete = 1;
+		msgbuf_writepos = 0;
 		eos_message_complete_callback();
 
 		eos_rx_state = EOS_RXSTATE_START;
@@ -89,35 +106,25 @@ void eos_byte_received(unsigned char byte) {
 	}
 
 	if (recording_message) {
-		eos_message_buffer[msgbuf_writepos++ % EOS_MESSAGE_BUFFER_SIZE] = byte;
+		eos_message_buffer[msgbuf_writepos++] = byte;
 	}
 }
 
 void eosprotocol_process_message() {
 
-	static unsigned char msgbuf_readpos = 0;
+	if (eos_message_complete) {
 
-	unsigned char complete_pos = eos_message_complete_pos;
-	if ((complete_pos % EOS_MESSAGE_BUFFER_SIZE) != (msgbuf_readpos % EOS_MESSAGE_BUFFER_SIZE)) {
+		unsigned char msg_toaddr = eos_message_buffer[0];
 
-		unsigned char msg_toaddr = eos_message_buffer[msgbuf_readpos % EOS_MESSAGE_BUFFER_SIZE];
-		unsigned char msg_datalen = eos_message_buffer[(msgbuf_readpos + 3) % EOS_MESSAGE_BUFFER_SIZE];
-
-		if (msg_datalen > 50) {
-			// we do not expect to handle a message this large,
-			// something has obviously gone wrong.
-			// so we discard all messages in the buffer.
-			msgbuf_readpos = eos_message_complete_pos;
-			return;
+		if (EOS_ADDRESS != 0 && msg_toaddr == EOS_ADDRESS) {
+			eos_local_handle_message(eos_message_buffer);
 		} else {
-			if (EOS_OWNADDR != 0 && msg_toaddr == EOS_OWNADDR) {
-				eos_local_handle_message(eos_message_buffer, msgbuf_readpos, complete_pos);
-			} else {
-				eos_remote_handle_message(eos_message_buffer, msgbuf_readpos, complete_pos);
-			}
+			eos_remote_handle_message(eos_message_buffer);
 		}
 
-		msgbuf_readpos = complete_pos;
+		// we have processed the message
+		// so the buffer can be overwritten by the next one
+		eos_message_complete = 0;
 	}
 
 }

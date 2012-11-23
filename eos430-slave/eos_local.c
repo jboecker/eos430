@@ -8,39 +8,95 @@
 #include <msp430g2332.h>
 #include "eos_local.h"
 #include "eos_dispatcher.h"
+#include "eos_config.h"
 
-void eos_update_input_state(unsigned char* state) {
-	if (P1IN & BIT3) {
-		state[0] = 0x01;
-	} else {
-		state[0] = 0x00;
+static unsigned char eos_inputstate[EOS_INPUTSTATE_LENGTH];
+
+inline void setRow(int rowNumber) {
+	//P1REN &= ~(BIT3|BIT4|BIT5|BIT6);
+	P1DIR &= ~(BIT3|BIT4|BIT5|BIT2);
+	P1OUT &= ~(BIT3|BIT4|BIT5|BIT2);
+	switch(rowNumber) {
+	case 0:
+		P1OUT |= BIT3;
+		P1DIR |= BIT3;
+		break;
+	case 1:
+		P1OUT |= BIT4;
+		P1DIR |= BIT4;
+		break;
+	case 2:
+		P1OUT |= BIT5;
+		P1DIR |= BIT5;
+		break;
+	case 3:
+		P1OUT |= BIT2;
+		P1DIR |= BIT2;
+		break;
+	}
+}
+inline int getColumnNumber() {
+	if (P2IN & BIT0)
+		return 1;
+	if (P2IN & BIT1)
+		return 2;
+	if (P2IN & BIT2)
+		return 3;
+	if (P2IN & BIT3)
+		return 4;
+	if (P2IN & BIT4)
+		return 5;
+	if (P2IN & BIT5)
+		return 6;
+	if (P2IN & BIT6)
+		return 7;
+	if (P2IN & BIT7)
+		return 8;
+	if (P1IN & BIT1)
+		return 9;
+	return 0;
+}
+void eos_update_input_state(unsigned char eos_inputstate[]) {
+	eos_inputstate[0] = 0;
+	eos_inputstate[1] = 0;
+	eos_inputstate[2] = 0;
+	eos_inputstate[3] = 0;
+	eos_inputstate[4] = 0;
+
+	return;
+
+	int rowNumber; int colNumber; int buttonNumber = 0;
+	for (rowNumber = 0; rowNumber < 4; rowNumber++) {
+		setRow(rowNumber);
+		_NOP();_NOP();_NOP();_NOP();
+		int col = getColumnNumber();
+		if (col > 0) {
+			int buttonNumber = (rowNumber*9) + col;
+			char index =buttonNumber / 8;
+			eos_inputstate[index] = 1 << (buttonNumber - (index*8));
+			return;
+		}
 	}
 }
 
-void eos_local_handle_message(unsigned char* ringbuffer, unsigned char start_index, unsigned char end_index) {
+
+void eos_local_handle_message(unsigned char* message) {
+
+	unsigned char msg_cmd = message[2];
+	unsigned char msg_datalen = message[3];
+	unsigned char msg_checksum = message[4 + msg_datalen];
 
 
-	P1OUT |= BIT4;
-
-
-	unsigned char msg_cmd = 0;
-	unsigned char msg_datalen = 0;
-	unsigned char msg_data[30];
-	unsigned char msg_checksum = 0;
-	unsigned char msg_fromaddr = 0;
-	unsigned char msg_toaddr = 0;
-
-	msg_toaddr = ringbuffer[start_index++ % EOS_MESSAGE_BUFFER_SIZE];
-	msg_fromaddr = ringbuffer[start_index++ % EOS_MESSAGE_BUFFER_SIZE];
-	msg_cmd = ringbuffer[start_index++ % EOS_MESSAGE_BUFFER_SIZE];
-	msg_datalen = ringbuffer[start_index++ % EOS_MESSAGE_BUFFER_SIZE];
-
+	// verify checksum
+	unsigned char check = 0;
 	unsigned char i;
-	for (i=0; i<msg_datalen; i++)
-		msg_data[i] = ringbuffer[start_index++ % EOS_MESSAGE_BUFFER_SIZE];
-	msg_checksum = ringbuffer[start_index++ % EOS_MESSAGE_BUFFER_SIZE];
-
-
+	/*
+	for (i=0; i<4+msg_datalen; i++)
+		if (i != 3)
+			check += message[i];
+	if (check != msg_checksum)
+		return;
+*/
 
 	static unsigned char response_msg[50];
 	response_msg[0] = EOS_PACKET_START_BYTE;
@@ -100,7 +156,6 @@ void eos_local_handle_message(unsigned char* ringbuffer, unsigned char start_ind
 		checksum += 127;
 		response_msg[response_msg_len++] = 127; // command, response flag set, expects_response flag cleared
 
-		unsigned char eos_inputstate[EOS_INPUTSTATE_LENGTH];
 		eos_update_input_state(eos_inputstate);
 
 		response_msg[response_msg_len++] = EOS_INPUTSTATE_LENGTH; // data length, does not go into the checksum
@@ -112,9 +167,7 @@ void eos_local_handle_message(unsigned char* ringbuffer, unsigned char start_ind
 		}
 
 		response_msg[response_msg_len++] = checksum;
-
 	}
-
 
 	if (response_msg_len == 2) {
 		// no response was sent
@@ -122,9 +175,5 @@ void eos_local_handle_message(unsigned char* ringbuffer, unsigned char start_ind
 	}
 
 	eosprotocol_send_message(response_msg, response_msg_len);
-
-	P1OUT &= ~BIT4;
-
-
 
 }
