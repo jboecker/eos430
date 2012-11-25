@@ -109,6 +109,7 @@ void eos_message_complete_callback() {
 #pragma vector = USCIAB0RX_VECTOR
 __interrupt void USCIAB0RX_ISR(void)
 {
+	// TODO: Master crashes(?) when slave NACKs a read request
 	// check for and handle I2C NACK
 	if (UCB0STAT & UCNACKIFG){            // send STOP if slave sends NACK
 	  	  i2c_nackflag = 1;
