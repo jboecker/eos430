@@ -9,7 +9,6 @@
 #include "eos_local.h"
 #include "eos_remote.h"
 #include "eos_config.h"
-#include <msp430.h>
 
 // ringbuffer to hold incoming EOS messages
 static unsigned char eos_message_buffer[EOS_MESSAGE_BUFFER_SIZE];
