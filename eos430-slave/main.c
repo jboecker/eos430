@@ -20,15 +20,25 @@ void main(void)
 
   WDTCTL = WDTPW + WDTHOLD;            // Stop watchdog
 
-    BCSCTL1 = CALBC1_16MHZ;               // Set DCO
-    DCOCTL = CALDCO_16MHZ;
+  BCSCTL1 = CALBC1_16MHZ;               // Set DCO
+  DCOCTL = CALDCO_16MHZ;
 
+  P1DIR |= BIT0;  // debug / LED pin is output
 
+  // I2C pull-up resistors
   P1OUT = 0xC0;                        // P1.6 & P1.7 Pullups
   P1REN |= 0xC0;                       // P1.6 & P1.7 Pullups
-  //P1DIR = 0xFF;                        // Unused pins as outputs
-  //P2OUT = 0;
-  //P2DIR = 0xFF;
+
+
+  P2SEL &= ~(BIT6 + BIT7);
+  P2SEL2 &= ~(BIT6 + BIT7);
+
+
+  // column pull-down resistors
+  P1REN |= BIT5;
+  P2DIR = 0x00;
+  P2REN = 0xFF;
+  P2OUT = 0x00;
 
   USICTL0 = USIPE6+USIPE7+USISWRST;    // Port & USI mode setup
   USICTL1 = USII2C+USIIE+USISTTIE;     // Enable I2C mode & USI interrupts
@@ -42,6 +52,7 @@ void main(void)
 
   while(1)
   {
+	  eos_update_input_state();
 	  eosprotocol_process_message();
   }
 }

@@ -2,6 +2,8 @@
 <configurations XML_version="1.2" id="configurations_0">
     
 
+
+
 <configuration XML_version="1.2" id="TI MSP430 USB2_0">
         <instance XML_version="1.2" desc="TI MSP430 USB2_0" href="connections/TIMSP430-USB2.xml" id="TI MSP430 USB2_0" xml="TIMSP430-USB2.xml" xmlpath="connections"/>
         <connection XML_version="1.2" id="TI MSP430 USB2_0">

@@ -10,6 +10,6 @@
 
 void eos_local_handle_message(unsigned char* message);
 
-void eos_update_input_state(unsigned char* state);
+void eos_update_input_state();
 
 #endif /* EOS_LOCAL_H_ */

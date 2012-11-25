@@ -13,65 +13,88 @@
 static unsigned char eos_inputstate[EOS_INPUTSTATE_LENGTH];
 
 inline void setRow(int rowNumber) {
-	//P1REN &= ~(BIT3|BIT4|BIT5|BIT6);
-	P1DIR &= ~(BIT3|BIT4|BIT5|BIT2);
-	P1OUT &= ~(BIT3|BIT4|BIT5|BIT2);
+	// all rows to L (pull-down resistor)
+	P1DIR &= ~(BIT1|BIT2|BIT3|BIT4);
+	P1OUT &= ~(BIT1|BIT2|BIT3|BIT4);
+	P1REN |= (BIT1|BIT2|BIT3|BIT4);
+
+	// selected row to 1
 	switch(rowNumber) {
 	case 0:
+		P1REN &= ~BIT1;
+		P1OUT |= BIT1;
+		P1DIR |= BIT1;
+		break;
+	case 1:
+		P1REN &= ~BIT2;
+		P1OUT |= BIT2;
+		P1DIR |= BIT2;
+		break;
+	case 2:
+		P1REN &= ~BIT3;
 		P1OUT |= BIT3;
 		P1DIR |= BIT3;
 		break;
-	case 1:
+	case 3:
+		P1REN &= ~BIT4;
 		P1OUT |= BIT4;
 		P1DIR |= BIT4;
-		break;
-	case 2:
-		P1OUT |= BIT5;
-		P1DIR |= BIT5;
-		break;
-	case 3:
-		P1OUT |= BIT2;
-		P1DIR |= BIT2;
 		break;
 	}
 }
 inline int getColumnNumber() {
-	if (P2IN & BIT0)
-		return 1;
-	if (P2IN & BIT1)
-		return 2;
-	if (P2IN & BIT2)
-		return 3;
-	if (P2IN & BIT3)
-		return 4;
-	if (P2IN & BIT4)
-		return 5;
-	if (P2IN & BIT5)
-		return 6;
-	if (P2IN & BIT6)
-		return 7;
-	if (P2IN & BIT7)
-		return 8;
-	if (P1IN & BIT1)
-		return 9;
-	return 0;
+
+	int ret = 0;
+
+	volatile unsigned char p2;
+
+	P2DIR = 0x00;
+	P2REN = 0xff;
+	P2OUT = 0x00;
+
+	_NOP();_NOP();_NOP();_NOP();
+
+	P1OUT |= BIT0;
+	p2 = P2IN;
+	P1OUT &= ~BIT0;
+
+	_NOP();
+	if (P1IN & BIT5)
+		ret = 1;
+	if (p2 & BIT0)
+		ret = 2;
+	if (p2 & BIT1)
+		ret = 3;
+	if (p2 & BIT2)
+		ret = 4;
+	if (p2 & BIT3)
+		ret = 5;
+	if (p2 & BIT4)
+		ret = 6;
+	if (p2 & BIT5)
+		ret = 7;
+	if (p2 & BIT7)
+		ret = 8;
+	if (p2 & BIT6)
+		ret = 9;
+
+
+	return ret;
 }
-void eos_update_input_state(unsigned char eos_inputstate[]) {
+void eos_update_input_state() {
 	eos_inputstate[0] = 0;
 	eos_inputstate[1] = 0;
-	eos_inputstate[2] = 0;
-	eos_inputstate[3] = 0;
-	eos_inputstate[4] = 0;
+//	eos_inputstate[2] = 0;
+//	eos_inputstate[3] = 0;
+//	eos_inputstate[4] = 0;
 
-	return;
-
-	int rowNumber; int colNumber; int buttonNumber = 0;
-	for (rowNumber = 0; rowNumber < 4; rowNumber++) {
+	unsigned char rowNumber;
+	//for (rowNumber = 0; rowNumber < 4; rowNumber++) {
+	for (rowNumber = 0; rowNumber < 1; rowNumber++) {
 		setRow(rowNumber);
-		_NOP();_NOP();_NOP();_NOP();
 		int col = getColumnNumber();
 		if (col > 0) {
-			int buttonNumber = (rowNumber*9) + col;
+			int buttonNumber = (rowNumber*9) + col - 1;
 			char index =buttonNumber / 8;
 			eos_inputstate[index] = 1 << (buttonNumber - (index*8));
 			return;
@@ -155,8 +178,6 @@ void eos_local_handle_message(unsigned char* message) {
 
 		checksum += 127;
 		response_msg[response_msg_len++] = 127; // command, response flag set, expects_response flag cleared
-
-		eos_update_input_state(eos_inputstate);
 
 		response_msg[response_msg_len++] = EOS_INPUTSTATE_LENGTH; // data length, does not go into the checksum
 

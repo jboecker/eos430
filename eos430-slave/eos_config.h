@@ -14,10 +14,10 @@
 // (if this device is a dedicated EOS master without its own input elements)
 #define EOS_ADDRESS 0x05
 
-#define EOS_NUMBER_OF_DIGITAL_INPUTS 40
-#define EOS_INPUTSTATE_LENGTH 5 // must match the other NUMBER_OF_* defines
+#define EOS_NUMBER_OF_DIGITAL_INPUTS 9
+#define EOS_INPUTSTATE_LENGTH 2 // must match the other NUMBER_OF_* defines
 
-#define EOS_BOARD_NAME 'e','o','s','R','m','f','c','d'
+#define EOS_BOARD_NAME 'A','1','0',' ','N','M','S','P'
 #define EOS_BOARD_VERSION '0','0','0','1'
 
 
