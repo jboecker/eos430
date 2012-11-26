@@ -12,12 +12,12 @@
 // address of this device on the EOS bus
 // messages to this device will be dispatched to the local handler
 // (if this device is a dedicated EOS master without its own input elements)
-#define EOS_ADDRESS 0x06
+#define EOS_ADDRESS 0x03
 
 #define EOS_NUMBER_OF_DIGITAL_INPUTS 33
 #define EOS_INPUTSTATE_LENGTH 5 // must match the other NUMBER_OF_* defines
 
-#define EOS_BOARD_NAME 'A','1','0',' ','R','M','F','D'
+#define EOS_BOARD_NAME 'A','1','0',' ','L','M','F','D'
 #define EOS_BOARD_VERSION '0','0','0','1'
 
 
