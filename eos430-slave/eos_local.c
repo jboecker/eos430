@@ -84,13 +84,13 @@ inline int getColumnNumber() {
 void eos_update_input_state() {
 	eos_inputstate[0] = 0;
 	eos_inputstate[1] = 0;
-//	eos_inputstate[2] = 0;
-//	eos_inputstate[3] = 0;
-//	eos_inputstate[4] = 0;
+	eos_inputstate[2] = 0;
+	eos_inputstate[3] = 0;
+	eos_inputstate[4] = 0;
 
 	unsigned char rowNumber;
-	//for (rowNumber = 0; rowNumber < 4; rowNumber++) {
-	for (rowNumber = 0; rowNumber < 1; rowNumber++) {
+	for (rowNumber = 0; rowNumber < 4; rowNumber++) {
+	//for (rowNumber = 0; rowNumber < 1; rowNumber++) {
 		setRow(rowNumber);
 		int col = getColumnNumber();
 		if (col > 0) {
