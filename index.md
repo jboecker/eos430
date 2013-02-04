@@ -15,8 +15,8 @@ tutorial.](getting-started.html)
 
 Contributions are always welcome.
 
-* for bug reports, feature requests, and questions, please create a new
-issue on GitHub.
+* for bug reports, feature requests, and questions, please [create a new
+issue on GitHub.](https://github.com/jboecker/eos430/issues/new)
 
 * for patches to the source code or documentation, please submit a pull
 request on GitHub.
