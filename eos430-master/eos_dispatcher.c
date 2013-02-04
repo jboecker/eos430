@@ -10,7 +10,7 @@
 #include "eos_remote.h"
 #include "eos_config.h"
 
-// ringbuffer to hold incoming EOS messages
+// buffer to hold incoming EOS messages
 static unsigned char eos_message_buffer[EOS_MESSAGE_BUFFER_SIZE];
 static volatile unsigned char eos_message_complete = 0;
 

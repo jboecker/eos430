@@ -21,7 +21,7 @@
 #define EOS_BOARD_VERSION '0','0','0','1'
 
 
-// size of the EOS message ringbuffer
+// size of the EOS message buffer
 #define EOS_MESSAGE_BUFFER_SIZE 50
 
 
