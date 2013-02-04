@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>{{ page.title }}</title>
+    <style>
+      body {
+      color: #373737;
+      font-size: 16px;
+      font-family: 'Myriad Pro', Calibri, Helvetica, Arial, sans-serif;
+      line-height: 1.5;
+      }
+      code {
+      font-size: 14px;
+      background-color: #eee;
+      border: 1px solid #dedede;
+      }
+      #content-wrapper {
+      max-width: 40em;
+      margin-top: 0;
+      margin-left: 10em;
+      padding: 2em;
+      }
+      #nav {
+      margin: 1em;
+      padding: .2em;
+      width: 9em;
+      float: left;
+      line-height: 1;
+      }
+      .menuEntry:hover {
+      background-color: orange;
+      }
+      .menuEntry {
+      padding: .2em;
+      margin: .1em;
+      }
+      .activeMenuEntry {
+      background-color: orange;
+      font-weight: bold;
+      }
+      .menuList {
+      list-style-type: none;
+      padding-left: .3em;
+      display: block;
+      margin-right:0;
+      margin-left:0;
+      }
+    </style>
+  </head>
+  <body>
+    
+    <div id="nav">
+
+      {% assign menu_section = "documentation" %}
+      {% include menu-section.html %}
+
+      <h4>Tutorials</h4>
+      {% assign menu_section = "tutorials" %}
+      {% include menu-section.html %}
+
+      <h4>Hardware</h4>
+      {% assign menu_section = "hardware" %}
+      {% include menu-section.html %}
+
+    </div>
+
+    <div id="content-wrapper">
+    {{ content }}
+    </div>
+
+  </body>
+</html>

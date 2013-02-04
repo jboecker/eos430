@@ -1,0 +1,26 @@
+{% capture keylist %}
+{% for p in site.pages %}
+{% if p.section == menu_section %}
+{{ p.sortkey }}
+{% endif %}
+{% endfor %}
+{% endcapture %}
+
+{% capture newline %}
+{% endcapture %}
+
+{% assign keylist = keylist|split:newline|sort %}
+<ul class="menuList">
+{% for key in keylist %}
+{% for p in site.pages %}
+{% if p.section == menu_section and p.sortkey == key %}
+{% if p.url == page.url %}
+<li class="menuEntry activeMenuEntry">{{ p.title }}</li>
+{% else %}
+<a href="{{ site.baseurl }}{{ p.url }}"><li class="menuEntry">{{ p.title }}</li></a>
+{% endif %}
+
+{% endif %}
+{% endfor %}
+{% endfor %}
+</ul>
