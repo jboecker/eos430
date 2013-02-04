@@ -8,7 +8,7 @@
 #include "eos_dispatcher.h"
 #include "eos_local.h"
 #include "eos_remote.h"
-#include <msp430.h>
+#include "eos_config.h"
 
 // ringbuffer to hold incoming EOS messages
 static unsigned char eos_message_buffer[EOS_MESSAGE_BUFFER_SIZE];
@@ -115,7 +115,7 @@ void eosprotocol_process_message() {
 
 		unsigned char msg_toaddr = eos_message_buffer[0];
 
-		if (EOS_OWNADDR != 0 && msg_toaddr == EOS_OWNADDR) {
+		if (EOS_ADDRESS != 0 && msg_toaddr == EOS_ADDRESS) {
 			eos_local_handle_message(eos_message_buffer);
 		} else {
 			eos_remote_handle_message(eos_message_buffer);

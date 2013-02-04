@@ -5,36 +5,42 @@
  *      Author: Jan
  */
 
-
+#include <msp430.h>
 #include "eos_local.h"
 #include "eos_dispatcher.h"
-#include <msp430g2553.h>
+#include "eos_config.h"
 
-void eos_update_input_state(unsigned char* state) {
+static unsigned char eos_inputstate[EOS_INPUTSTATE_LENGTH];
+
+void eos_update_input_state() {
+	// set digital input 0 to the state of the push button
 	if (P1IN & BIT3) {
-		state[0] = 0x01;
+		// P1.3 is high, button is not pressed
+		eos_inputstate[0] = 0x00;
 	} else {
-		state[0] = 0x00;
+		// P1.3 is pulled low, button is pressed
+		eos_inputstate[0] = BIT0; // 0x01
 	}
 }
 
+
 void eos_local_handle_message(unsigned char* message) {
 
-	unsigned char msg_toaddr = message[0];
-	unsigned char msg_fromaddr = message[1];
 	unsigned char msg_cmd = message[2];
 	unsigned char msg_datalen = message[3];
 	unsigned char msg_checksum = message[4 + msg_datalen];
 
+
 	// verify checksum
 	unsigned char check = 0;
 	unsigned char i;
+	/*
 	for (i=0; i<4+msg_datalen; i++)
 		if (i != 3)
 			check += message[i];
 	if (check != msg_checksum)
 		return;
-
+*/
 
 	static unsigned char response_msg[50];
 	response_msg[0] = EOS_PACKET_START_BYTE;
@@ -94,9 +100,6 @@ void eos_local_handle_message(unsigned char* message) {
 		checksum += 127;
 		response_msg[response_msg_len++] = 127; // command, response flag set, expects_response flag cleared
 
-		unsigned char eos_inputstate[EOS_INPUTSTATE_LENGTH];
-		eos_update_input_state(eos_inputstate);
-
 		response_msg[response_msg_len++] = EOS_INPUTSTATE_LENGTH; // data length, does not go into the checksum
 
 
@@ -106,8 +109,13 @@ void eos_local_handle_message(unsigned char* message) {
 		}
 
 		response_msg[response_msg_len++] = checksum;
-
-		eosprotocol_send_message(response_msg, response_msg_len);
-
 	}
+
+	if (response_msg_len == 2) {
+		// no response was sent
+		response_msg_len = 0;
+	}
+
+	eosprotocol_send_message(response_msg, response_msg_len);
+
 }

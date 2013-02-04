@@ -16,11 +16,6 @@
 // size of the EOS message ringbuffer
 #define EOS_MESSAGE_BUFFER_SIZE 250
 
-// address of this device on the EOS bus
-// messages to this device will be dispatched to the local handler
-// (if this device is a dedicated EOS master without its own input elements)
-#define EOS_OWNADDR 0
-
 // call this when a new byte arrives on the EOS bus
 void eos_byte_received(unsigned char data);
 
