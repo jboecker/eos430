@@ -18,8 +18,8 @@
  * Setting EOS_DISABLE_REMOTE to 1 will cause the dispatcher to
  * ignore the I2C bus altogether.
  */
-#define EOS_DISABLE_REMOTE 0
-//#define EOS_DISABLE_REMOTE 1
+//#define EOS_DISABLE_REMOTE 0
+#define EOS_DISABLE_REMOTE 1
 
 void eos_remote_handle_message(unsigned char* message);
 
