@@ -13,9 +13,6 @@
 #ifndef EOS_DISPATCHER_H_
 #define EOS_DISPATCHER_H_
 
-// size of the EOS message ringbuffer
-#define EOS_MESSAGE_BUFFER_SIZE 250
-
 // call this when a new byte arrives on the EOS bus
 void eos_byte_received(unsigned char data);
 
