@@ -38,6 +38,9 @@ void eos_remote_handle_message(unsigned char* message) {
 	unsigned char slave_address = message[0];
 	unsigned char msg_datalen = message[3];
 
+	if (EOS_DISABLE_REMOTE)
+		return;
+
 	if (slave_address > 127)
 		return;
 
