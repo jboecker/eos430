@@ -46,9 +46,16 @@ Arduino board:
   it with other 5V logic such as some LCD character displays. The
   MSP430 requires a supply voltage of 1.8V to 3.6V, so if you want to
   interface with 5V logic (such as some LCD character displays), you
-  will need a level shifter. The MSP430 Launchpad will supply 3.6V to
-  the controller, so if you want to connect to 3.3V logic, you will
+  may need a level shifter. The MSP430 Launchpad will supply 3.6V to
+  the controller, so if you want to connect to 3.3V logic, you may
   need to use another power source.
+  
+  Note that driving the common HD44780 based LCD displays should work
+  without a level shifter because (at least according to the first
+  datasheet I found) the controller will read anything above 2.2V as
+  logic high. (You can power your 5V LCD directly from USB -- on the
+  Launchpad, look for the two test pads labelled "TP3" and "TP1" next
+  to the USB connector.)
 
 * The Arduino has a larger community focused on beginners. Given the
   amount and quality of documentation on the web, both platforms
