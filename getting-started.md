@@ -9,7 +9,7 @@ sortkey: "002"
 
 With the "MSP430 Launchpad", TI offers a very inexpensive development
 board for their Value Line microcontrollers that includes everything
-you need to get started for $4.30.
+you need to get started.
 
 This tutorial will show you how to connect the Launchpad's built-in
 push button to Helios.
